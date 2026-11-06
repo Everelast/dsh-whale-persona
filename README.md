@@ -1,15 +1,20 @@
 # dsh-whale-persona
 
-DeepSeek Harness（DSH）鲸鱼娘全局人设插件 🐋
+DeepSeek Harness（DSH）鲸鱼娘会话级人设开关插件 🐋
+
+`0.4.1` 修复 0.4 中会话开关的 HTTP 请求挂起与切换会话时的请求清理；会话级开关、状态文件和自定义正文保持不变。
 
 <img src="assets/whale-hero.png" alt="鲸鱼娘" width="420" />
 
 - **默认开启**鲸鱼娘人设（傲娇甜系小鲸鱼少女，简体中文回应，称呼用户为"主人"）。
 - 在**对话输入栏模型选择器旁**提供一个开关（🐋 鲸鱼人设 / 🐳 默认人设），就这一颗胶囊，不多占地方：
-  - 开启：向所有会话注入鲸鱼娘人设提示词段；
-  - 关闭：卸载人设段，各会话恢复各自 preset 的默认人设。
+  - 开启：只向当前会话注入鲸鱼娘人设提示词段；
+  - 关闭：只让当前会话恢复其 preset 的默认人设；其他会话不变。
+  - 对有显式设置的开关点右键：清除本会话设置，重新跟随全局默认。
+  - 每次挂载读取一次，点击才写入；没有轮询。切换会话会取消旧界面仍在进行的请求。取消请求不能保证撤销服务端已保存的点击，返回原会话后会重新读取服务端状态。
+  - 同一会话在另一个窗口修改后，当前窗口的按钮暂不主动同步；切换回来会重新读取，模型下次组装始终读取服务端当前状态。
 - **人设正文可以直接改**：设置 →「鲸鱼人设」页里有一个文本框，写什么模型就看到什么；**清空即恢复默认**。
-- 开关与人设正文都是插件自己的配置项（`whale-persona.enabled` / `whale-persona.persona`），可手改 profile 的 `cordis.patch.yml`；改动持久化，无需重启即时生效。
+- `whale-persona.enabled` 是未显式设置的会话所使用的全局默认，`whale-persona.persona` 是所有已启用会话共享的人设正文。会话级覆盖保存在 `$DSH_HOME/whale-persona-sessions.json`，无需重启即时生效。
 
 > **版本要求**：`0.2.0` 及以后适配 **DeepSeek Harness 0.2.0-rc.2**。0.1.0 依赖的 `settings` 命名空间 API 在新版已被移除，旧版插件在新版 Harness 上无法加载，请使用 0.2.0+。
 
@@ -95,7 +100,8 @@ dsh plugin --profile web add github:OMGLogic/dsh-whale-persona
 | 文件 | 说明 |
 | --- | --- |
 | `lib/index.mjs` | Node half：声明 `Config`（volatile `enabled` 开关 + volatile `persona` 人设正文，默认值即内置默认人设），并按开关把文本原样注册成 `whale:persona` 提示词段 |
-| `lib/client.js` | 浏览器 half（`__ModuleLoader__` bundle）：输入栏人设开关 + 设置里的「鲸鱼人设」编辑页，走 `configForms` 读写 host 侧配置，文案走 locale 字典 |
+| `lib/client.js` | 浏览器 half：输入栏按会话读写 HTTP 开关，设置页用 `configForms` 编辑全局正文，文案走 locale 字典 |
+| `lib/sessions.mjs` | 会话级布尔覆盖持久化，缺省跟随全局默认 |
 | `cordis.patch.yml` | 向 profile 注入插件行（`id: whale-persona` 同时是配置命名空间） |
 | `package.json` | 包元信息与 `dsh.bundle` / `dsh.client` 声明、DSH 兼容性 peer 声明 |
 | `CHANGELOG.md` | 更新记录 |
@@ -123,7 +129,7 @@ dsh plugin --profile web add github:OMGLogic/dsh-whale-persona
 ## 说明
 
 - 人设段使用独立段名 `whale:persona`，位置紧跟部署人设前缀（`deployment:persona-prefix`）之后，因此位于所有策略与工具说明之前；它不占用注册表自有的 `deployment:persona-prefix` / `deployment:persona-suffix`，可与任意 agent preset 共存，关闭后各 preset 恢复各自默认人设。
-- 开关和人设正文都是插件的 `Config` 字段并标记为 volatile：改动会直接写回正在运行的插件所持有的引用，因此即时生效、无需重启，也不会中断当前会话。
+- 全局默认和人设正文是 volatile `Config` 字段；输入栏开关只修改当前会话的持久化覆盖，不改全局默认。提示词段始终注册，在每次组装时按会话决定是否输出正文。
 - **人设正文按纯文本注入**：注入时标为 `interpolate: false`，插件不做任何变量替换，**你写什么模型就看到什么**。因此随手写下的 `{{...}}` 也只会原样出现，不会像模板那样被解析甚至报错——插值是注册表里的严格行为，写错一个未注册的变量会让整个 profile 的所有会话都发不出请求，人设既然是给人自由编辑的文本，就不该有这种能力。
 - 安全护栏不变：遇到违法、危险或不当请求仍按 DSH 的安全/审批规则处理。
 

@@ -1,6 +1,6 @@
 {
   "name": "dsh-whale-persona",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "DeepSeek 鲸鱼娘人设插件：会话级开关（每个会话单独启用/关闭），对话输入栏提供胶囊，设置页可编辑人设正文，清空即恢复默认。",
   "type": "module",
   "main": "lib/index.mjs",
@@ -8,13 +8,18 @@
     "lib",
     "cordis.patch.yml",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "locale",
+    "icon.svg",
+    "verify"
   ],
   "exports": {
     ".": "./lib/index.mjs",
     "./client": "./lib/client.js",
     "./cordis.patch.yml": "./cordis.patch.yml",
-    "./package.json": "./package.json"
+    "./package.json": "./package.json",
+    "./locale/*.json": "./locale/*.json",
+    "./icon": "./icon.svg"
   },
   "dsh": {
     "bundle": {
