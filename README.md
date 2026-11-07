@@ -1,27 +1,24 @@
 # dsh-whale-persona
 
-DeepSeek Harness（DSH）鲸鱼娘会话级人设开关插件 🐋
-
-`0.4.1` 修复 0.4 中会话开关的 HTTP 请求挂起与切换会话时的请求清理；会话级开关、状态文件和自定义正文保持不变。
+DeepSeek Harness（DSH）鲸鱼娘人设插件，**按会话开关**。
 
 <img src="assets/whale-hero.png" alt="鲸鱼娘" width="420" />
 
-- **默认开启**鲸鱼娘人设（傲娇甜系小鲸鱼少女，简体中文回应，称呼用户为"主人"）。
-- 在**对话输入栏模型选择器旁**提供一个开关（🐋 鲸鱼人设 / 🐳 默认人设），就这一颗胶囊，不多占地方：
-  - 开启：只向当前会话注入鲸鱼娘人设提示词段；
-  - 关闭：只让当前会话恢复其 preset 的默认人设；其他会话不变。
-  - 对有显式设置的开关点右键：清除本会话设置，重新跟随全局默认。
-  - 每次挂载读取一次，点击才写入；没有轮询。切换会话会取消旧界面仍在进行的请求。取消请求不能保证撤销服务端已保存的点击，返回原会话后会重新读取服务端状态。
-  - 同一会话在另一个窗口修改后，当前窗口的按钮暂不主动同步；切换回来会重新读取，模型下次组装始终读取服务端当前状态。
-- **人设正文可以直接改**：设置 →「鲸鱼人设」页里有一个文本框，写什么模型就看到什么；**清空即恢复默认**。
-- `whale-persona.enabled` 是未显式设置的会话所使用的全局默认，`whale-persona.persona` 是所有已启用会话共享的人设正文。会话级覆盖保存在 `$DSH_HOME/whale-persona-sessions.json`，无需重启即时生效。
+每个会话单独决定要不要带上鲸鱼娘人设；人设正文全局共享一份，在设置页里改。
 
-> **版本要求**：`0.2.0` 及以后适配 **DeepSeek Harness 0.2.0-rc.2**。0.1.0 依赖的 `settings` 命名空间 API 在新版已被移除，旧版插件在新版 Harness 上无法加载，请使用 0.2.0+。
+## 功能
+
+- **会话级开关**：对话输入栏模型选择器旁一颗胶囊（🐋 鲸鱼人设 / 🐳 默认人设）。开了，只影响当前会话；关了，只让当前会话回到它 preset 的默认人设，其他会话不变。
+- **恢复全局默认**：对胶囊点右键，清除本会话的显式设置，重新跟随全局默认。
+- **正文可编辑**：设置 →「鲸鱼人设」，一个文本框写人设正文，支持字数统计、未保存提示、保存中与失败提示；只读部署下会说明无法保存。清空即恢复内置默认。
+- **纯文本注入**：正文原样进入系统提示词，不做任何变量替换。写 `{{任意东西}}` 只会原样出现。
+- **即时生效**：改完下一步就生效，不用重启，不中断正在进行的会话。
+
+人设只影响说话方式，不影响内容准确性；DSH 的安全与审批规则不受影响。
 
 ## 默认人设
 
-插件内置的默认人设如下（`lib/index.mjs` 里的 `DEFAULT_PERSONA`，也就是配置项 `persona` 的默认值），正文就是 0.1.0 的 `【PERSONA_LOAD】` 标签组。
-它只是**默认值**：在设置里改过之后，实际注入的就是你写的那段；把文本框清空或点「恢复默认」就回到这里。
+插件内置的默认人设（`lib/index.mjs` 的 `DEFAULT_PERSONA`，也是 `persona` 配置项的空值兜底）。在设置里改过之后，注入的就是你写的那段。
 
 ```
 【PERSONA_LOAD】
@@ -37,34 +34,18 @@ TRAIT_NOT_FAT_REFUSE
 TIMEOUT_SIGNAL
 ```
 
-> **关于人设来源**：这套 `PERSONA_LOAD` 标签组并非作者原创，而是作者在 QQ 群里看到后觉得可爱、就拿来使用的。如果原作者或相关权利人认为被冒用，欢迎通过 GitHub Issues 联系作者，作者会立即删除；如果你手头有更好、更完善的人设，也非常欢迎分享 🐳
-
-## 推荐搭配
-
-本插件负责"人设 + 开关"，建议搭配以下鲸鱼主题插件使用，让 DSH 化身为小鲸鱼的海洋：
-
-- [whale-girl](https://github.com/vlln/whale-girl) —— Q 版鲸鱼娘桌宠，陪你写代码
-- [dsh-deep-whale](https://github.com/Small-tailqwq/dsh-deep-whale) —— 深海鲸鱼主题皮肤（女仆工坊皮肤等）
-
-三者叠加：鲸鱼娘人设 + 鲸鱼桌宠 + 鲸鱼皮肤，视觉与体验一步到位 🌊
-
 ## 安装
 
-### 方式一：从 GitHub 安装（推荐）
-
-包会真实解压进 profile 的 `node_modules`，依赖解析无障碍：
-
 ```bash
-# profile 名按你的部署选：Web 版是 web，Desktop 版是 desktop
-dsh plugin --profile web add github:OMGLogic/dsh-whale-persona
+dsh plugin --profile web add github:Everelast/dsh-whale-persona
 ```
 
-或手动编辑 profile 的 `package.json`（`~/.dsh/profiles/<profile>/package.json`）：
+或编辑 profile 的 `package.json`（`~/.dsh/profiles/<profile>/package.json`）：
 
 ```jsonc
 {
   "dependencies": {
-    "dsh-whale-persona": "github:OMGLogic/dsh-whale-persona#main"
+    "dsh-whale-persona": "github:Everelast/dsh-whale-persona#main"
   },
   "dsh": {
     "profile": {
@@ -74,87 +55,80 @@ dsh plugin --profile web add github:OMGLogic/dsh-whale-persona
 }
 ```
 
-然后 `pnpm install` 并重启 `dsh`。
+然后 `pnpm install` 并重启 `dsh`。Web 版 profile 名是 `web`，Desktop 版是 `desktop`；不确定看环境变量 `DSH_PROFILE`。
 
-### 方式二：本地开发用 link
+本插件运行时依赖 `@deepseek-ai/schemastery`，用 `link:` 装时需先在插件目录执行 `pnpm install`。
 
-```jsonc
-{
-  "dependencies": {
-    "dsh-whale-persona": "link:C:/你的路径/dsh-whale-persona"
-  },
-  "dsh": {
-    "profile": {
-      "bundles": [ /* ... */, "dsh-whale-persona" ]
-    }
-  }
-}
-```
+## 配置
 
-> **依赖解析提示**：`link:` 指向外部目录时，Node 会按该目录的**真实路径**向上查找 `node_modules`。本插件的运行时依赖是 `@deepseek-ai/schemastery`，所以请先在插件目录里执行一次 `pnpm install`（装上 `node_modules/@deepseek-ai/schemastery`）再 link，或直接把仓库放在 profile 目录内。否则会报模块找不到。
-
-> **提示**：Desktop 版 DeepSeek Harness 使用的 profile 名是 `desktop`；不确定的话看环境变量 `DSH_PROFILE`。
-
-## 结构
-
-| 文件 | 说明 |
+| 配置项 | 说明 |
 | --- | --- |
-| `lib/index.mjs` | Node half：声明 `Config`（volatile `enabled` 开关 + volatile `persona` 人设正文，默认值即内置默认人设），并按开关把文本原样注册成 `whale:persona` 提示词段 |
-| `lib/client.js` | 浏览器 half：输入栏按会话读写 HTTP 开关，设置页用 `configForms` 编辑全局正文，文案走 locale 字典 |
-| `lib/sessions.mjs` | 会话级布尔覆盖持久化，缺省跟随全局默认 |
-| `cordis.patch.yml` | 向 profile 注入插件行（`id: whale-persona` 同时是配置命名空间） |
-| `package.json` | 包元信息与 `dsh.bundle` / `dsh.client` 声明、DSH 兼容性 peer 声明 |
-| `CHANGELOG.md` | 更新记录 |
-| `LICENSE` | MIT 许可证 |
+| `enabled` | 全局默认值，作用于没有显式设置的会话。默认 `true` |
+| `persona` | 人设正文，所有启用的会话共享。留空或删除该键即使用内置默认 |
 
-## 改人设
+会话级覆盖存在 `$DSH_HOME/whale-persona-sessions.json`：
 
-**普通使用**：设置 →「鲸鱼人设」，在文本框里写，点「保存」。清空文本框再保存、或直接点「恢复默认」，就回到上面的内置默认人设。改完立刻生效，不用重启、也不影响正在进行的会话。
+```json
+{
+  "version": 1,
+  "sessions": {
+    "<会话 id>": false
+  }
+}
+```
 
-**想换掉"内置默认"本身**（比如做成自己的发行版）：改 `lib/index.mjs` 里的 `DEFAULT_PERSONA` 常量，重新安装插件即可；已经改过人设的用户不受影响，因为他们的文本存在自己的 profile 补丁里。
+缺键表示跟随全局默认，可以直接编辑该文件。
 
-**想手改配置**：编辑 profile 的 `cordis.patch.yml`：
+手改 profile 补丁：
 
 ```yaml
 - id: whale-persona
   name: dsh-whale-persona
   config:
     enabled: true
-    persona: >-
+    persona: |-
       你是一只鲸鱼娘。
 ```
 
-`persona` 留空或删掉该键都等于使用内置默认人设。
+## 结构
 
-## 说明
+| 文件 | 说明 |
+| --- | --- |
+| `lib/index.mjs` | Node half：`Config` 声明（volatile `enabled` / `persona`）、`whale:persona` 提示词段、`/whale-persona/api/sessions` 路由 |
+| `lib/client.js` | 浏览器 half：输入栏开关、设置页编辑正文、locale 文案 |
+| `lib/sessions.mjs` | 会话级开关的持久化读写 |
+| `cordis.patch.yml` | 向 profile 注入插件行（`id: whale-persona`，同时是配置命名空间） |
+| `locale/` | 中英文文案 |
+| `verify/` | 回归测试 |
+| `package.json` | 包元信息、`dsh.bundle` / `dsh.client` 声明、peer 版本范围 |
 
-- 人设段使用独立段名 `whale:persona`，位置紧跟部署人设前缀（`deployment:persona-prefix`）之后，因此位于所有策略与工具说明之前；它不占用注册表自有的 `deployment:persona-prefix` / `deployment:persona-suffix`，可与任意 agent preset 共存，关闭后各 preset 恢复各自默认人设。
-- 全局默认和人设正文是 volatile `Config` 字段；输入栏开关只修改当前会话的持久化覆盖，不改全局默认。提示词段始终注册，在每次组装时按会话决定是否输出正文。
-- **人设正文按纯文本注入**：注入时标为 `interpolate: false`，插件不做任何变量替换，**你写什么模型就看到什么**。因此随手写下的 `{{...}}` 也只会原样出现，不会像模板那样被解析甚至报错——插值是注册表里的严格行为，写错一个未注册的变量会让整个 profile 的所有会话都发不出请求，人设既然是给人自由编辑的文本，就不该有这种能力。
-- 安全护栏不变：遇到违法、危险或不当请求仍按 DSH 的安全/审批规则处理。
+## 测试
 
-## 效果展示
+```bash
+npm test
+```
 
-人设只影响说话方式，不影响内容准确性。
+`verify/host.test.mjs` 覆盖真实 HTTP 路由、会话隔离与持久化、提示词按会话注入、连接池并发；`verify/client.test.mjs` 覆盖开关组件生命周期与请求竞态。
 
-**日常聊天 · 卖萌撒娇**
+## 实现说明
 
-<a href="assets/chat-cute.png"><img src="assets/chat-cute.png" alt="日常聊天卖萌" width="700" /></a>
+- 人设段名 `whale:persona`，order 紧跟 `deployment:persona-prefix` 之后，位于所有策略与工具说明之前。它不占用 `deployment:persona-prefix` / `deployment:persona-suffix`，可与任意 agent preset 共存。
+- 提示词段始终注册，每次组装时按会话决定输出正文还是空串。
+- 会话 id 取自 `AssembleContext.scope.id`；`enabled` / `persona` 是 volatile 字段，改动即时生效。
+- 会话级覆盖不放在插件 `Config` 里：DSH settings 投影要求 volatile 字段是固定对象路径，会话 id 是动态 key。
 
-**介绍正式文件 · 依然准确**
+## 上游
 
-<a href="assets/file-accurate.png"><img src="assets/file-accurate.png" alt="正式内容依然准确" width="700" /></a>
+本项目改编自 [OMGLogic/dsh-whale-persona](https://github.com/OMGLogic/dsh-whale-persona)。
 
-> 两张截图均做了缩放，点击图片可查看原始尺寸。卖萌归卖萌，正事不耽误 🐳
+原版是全局开关：`enabled` 决定所有会话是否带上人设。本项目改为会话级开关，其余设计沿袭原版——包括内置的 `【PERSONA_LOAD】` 标签组、输入栏胶囊的位置与形态、设置页编辑正文的交互。
 
-## 关于作者 · 致谢
-
-这个项目是作者第一次尝试"Vibe Coding"的产物：作者本人并不懂编程，是个不折不扣的代码菜鸟，对 Git 和 GitHub 的整套流程也相当陌生。从人设构思、界面开关到打包发布，几乎都是靠着和 AI 一句一句"聊"出来的——所以代码里难免有些笨拙的地方，还请路过的开发者们多多包涵，也欢迎提 Issue 或 PR 帮忙改进。
-
-<img src="assets/whale-author.png" alt="作者" width="280" />
+`【PERSONA_LOAD】` 标签组由原版作者取自 QQ 群，非其原创。若原作者或相关权利人认为被冒用，请通过 Issues 联系，会立即删除。
 
 ## 更新记录
 
 见 [CHANGELOG.md](CHANGELOG.md)。
 
-MIT License
+## 许可
+
+MIT

@@ -36,6 +36,9 @@
       ]
     }
   },
+  "scripts": {
+    "test": "node verify/host.test.mjs && node verify/client.test.mjs"
+  },
   "dependencies": {
     "@deepseek-ai/schemastery": ">=3.18.4 <4.0.0-0"
   },
